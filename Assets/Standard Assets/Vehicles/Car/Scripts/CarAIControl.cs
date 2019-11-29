@@ -26,8 +26,13 @@ namespace UnityStandardAssets.Vehicles.Car
         [SerializeField] private float m_CautiousMaxDistance = 100f;                              // distance at which distance-based cautiousness begins
         [SerializeField] private float m_CautiousAngularVelocityFactor = 30f;                     // how cautious the AI should be when considering its own current angular velocity (i.e. easing off acceleration if spinning!)
         [SerializeField] private float m_SteerSensitivity = 0.05f;                                // how sensitively the AI uses steering input to turn to the desired direction
+        [Header("Alpha3")]
         [SerializeField] private float m_AccelSensitivity = 0.04f;                                // How sensitively the AI uses the accelerator to reach the current desired speed
         [SerializeField] private float m_BrakeSensitivity = 1f;                                   // How sensitively the AI uses the brake to reach the current desired speed
+        [Header("Alpha2")]
+        [SerializeField] private float m_HeadGapSensitivity = 1.0f;
+        [SerializeField] private float m_RequiredHeadGap = 8.0f;
+        [Header("Wandering")]
         [SerializeField] private float m_LateralWanderDistance = 3f;                              // how far the car will wander laterally towards its target
         [SerializeField] private float m_LateralWanderSpeed = 0.1f;                               // how fast the lateral wandering will fluctuate
         [SerializeField] [Range(0, 1)] private float m_AccelWanderAmount = 0.1f;                  // how much the cars acceleration will wander
@@ -153,7 +158,19 @@ namespace UnityStandardAssets.Vehicles.Car
                                                   : m_AccelSensitivity;
 
                 // decide the actual amount of accel/brake input to achieve desired speed.
-                float accel = Mathf.Clamp((desiredSpeed - m_CarController.CurrentSpeed)*accelBrakeSensitivity, -1, 1);
+                var tracker = GetComponent<Utility.WaypointProgressTracker>();
+
+                float accel = (desiredSpeed - m_CarController.CurrentSpeed) * accelBrakeSensitivity;
+
+                var siblingLaneAheadCar = CarList.Instance.FindAheadCar(tracker, CarList.FindCarOption.InDifferentLane);
+                
+                if (siblingLaneAheadCar != null && siblingLaneAheadCar.GetComponent<CarController>().LeftWinkerOn)
+                {
+                    float minGap = Mathf.Min(CarList.Instance.GetAheadGap(tracker), CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane));
+                    accel = (1.0f - m_RequiredHeadGap / minGap) * m_HeadGapSensitivity;
+                }
+
+                accel = Mathf.Clamp(accel, -1, 1);
 
                 // add acceleration 'wander', which also prevents AI from seeming too uniform and robotic in their driving
                 // i.e. increasing the accel wander amount can introduce jostling and bumps between AI cars in a race

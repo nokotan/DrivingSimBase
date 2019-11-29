@@ -7168,6 +7168,7 @@ MonoBehaviour:
   m_RevRangeBoundary: 1
   m_SlipLimit: 0.4
   m_BrakeTorque: 20000
+  m_WinkerOffTriggerSensitivity: 0.3
 --- !u!114 &11400022
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7187,6 +7188,8 @@ MonoBehaviour:
   m_SteerSensitivity: 0.01
   m_AccelSensitivity: 1
   m_BrakeSensitivity: 1
+  m_HeadGapSensitivity: 2
+  m_RequiredHeadGap: 8
   m_LateralWanderDistance: 0
   m_LateralWanderSpeed: 0
   m_AccelWanderAmount: 0
