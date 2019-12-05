@@ -26,7 +26,6 @@ namespace UnityStandardAssets.Vehicles.Car
             m_Car.LeftWinkerOn |= CrossPlatformInputManager.GetButtonDown("Fire1");
             m_Car.RightWinkerOn |= CrossPlatformInputManager.GetButtonDown("Fire2");
 
-            Debug.Log(CarList.Instance.GetAheadGap(GetComponent<Utility.WaypointProgressTracker>()));
 #if !MOBILE_INPUT
             float handbrake = CrossPlatformInputManager.GetAxis("Jump");
             m_Car.Move(h, v, v, handbrake);

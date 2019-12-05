@@ -31,6 +31,8 @@ namespace UnityStandardAssets.Utility
         [SerializeField] private float pointToPointThreshold = 4;
         // proximity to waypoint which must be reached to switch target to next waypoint : only used in PointToPoint mode.
 
+        [SerializeField] private float targetLineDistance = 0.0f;
+
         public enum ProgressStyle
         {
             SmoothAlongRoute,
@@ -50,6 +52,17 @@ namespace UnityStandardAssets.Utility
         private float speed; // current speed of this object (calculated from delta since last frame)
 
         public WaypointCircuit Circuit => circuit;
+
+        public float CurrentLaneDistance
+        {
+            get
+            {
+                var difference = transform.position - progressPoint.position;
+                var normal = Vector3.Cross(progressPoint.direction, Vector3.up);
+
+                return -Vector3.Dot(difference, normal);
+            }
+        }
 
         // setup script properties
         private void Start()
@@ -78,6 +91,8 @@ namespace UnityStandardAssets.Utility
             {
                 target.position = circuit.Waypoints[progressNum].position;
                 target.rotation = circuit.Waypoints[progressNum].rotation;
+
+                target.position += new Vector3(targetLineDistance, 0.0f, 0.0f);
             }
         }
 
@@ -102,6 +117,7 @@ namespace UnityStandardAssets.Utility
                         circuit.GetRoutePoint(progressDistance + lookAheadForSpeedOffset + lookAheadForSpeedFactor*speed)
                                .direction);
 
+                target.position += new Vector3(targetLineDistance, 0.0f, 0.0f);
 
                 // get our current progress along the route
                 progressPoint = circuit.GetRoutePoint(progressDistance);
@@ -127,6 +143,8 @@ namespace UnityStandardAssets.Utility
                 target.position = circuit.Waypoints[progressNum].position;
                 target.rotation = circuit.Waypoints[progressNum].rotation;
 
+                target.position += new Vector3(targetLineDistance, 0.0f, 0.0f);
+
                 // get our current progress along the route
                 progressPoint = circuit.GetRoutePoint(progressDistance);
                 Vector3 progressDelta = progressPoint.position - transform.position;
@@ -135,7 +153,7 @@ namespace UnityStandardAssets.Utility
                     progressDistance += progressDelta.magnitude;
                 }
                 lastPosition = transform.position;
-            }
+            }       
         }
 
 

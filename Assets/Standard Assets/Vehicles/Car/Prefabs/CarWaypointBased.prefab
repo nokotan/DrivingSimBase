@@ -7186,8 +7186,8 @@ MonoBehaviour:
   m_CautiousMaxDistance: 100
   m_CautiousAngularVelocityFactor: 30
   m_SteerSensitivity: 0.01
-  m_AccelSensitivity: 1
-  m_BrakeSensitivity: 1
+  m_AccelSensitivity: 0.2
+  m_BrakeSensitivity: 0.5
   m_HeadGapSensitivity: 2
   m_RequiredHeadGap: 8
   m_LateralWanderDistance: 0
@@ -7220,6 +7220,7 @@ MonoBehaviour:
   lookAheadForSpeedFactor: 0.5
   progressStyle: 0
   pointToPointThreshold: 0.2
+  targetLineDistance: 0
   target: {fileID: 400060}
 --- !u!114 &11400026
 MonoBehaviour:

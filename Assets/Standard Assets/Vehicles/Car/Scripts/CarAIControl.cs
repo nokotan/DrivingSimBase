@@ -167,7 +167,23 @@ namespace UnityStandardAssets.Vehicles.Car
                 if (siblingLaneAheadCar != null && siblingLaneAheadCar.GetComponent<CarController>().LeftWinkerOn)
                 {
                     float minGap = Mathf.Min(CarList.Instance.GetAheadGap(tracker), CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane));
-                    accel = (1.0f - m_RequiredHeadGap / minGap) * m_HeadGapSensitivity;
+
+                    if (minGap < m_RequiredHeadGap || true)
+                    {
+                        accel += (1.0f - m_RequiredHeadGap / minGap) * m_HeadGapSensitivity;
+                    }
+                }
+
+                var aheadCar = CarList.Instance.FindAheadCar(tracker, CarList.FindCarOption.InSameLane);
+
+                if (aheadCar != null)
+                {
+                    float gap = CarList.Instance.GetAheadGap(tracker);
+
+                    if (gap < m_RequiredHeadGap || true)
+                    {
+                        accel += (1.0f - m_RequiredHeadGap / gap) * m_HeadGapSensitivity;
+                    }
                 }
 
                 accel = Mathf.Clamp(accel, -1, 1);

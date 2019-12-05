@@ -44,6 +44,32 @@ public class CarList : MonoBehaviour
         InSameLane,
         InDifferentLane
     }
+
+    [System.Flags]
+    public enum CarLane
+    {
+        ThroughLane = 1,
+        MergingLane = 2,
+        InterLane = 3,
+    }
+
+    CarLane GetCarLane(WaypointProgressTracker tracker)
+    {
+        var laneDifference = tracker.CurrentLaneDistance;
+
+        if (laneDifference < -1.0f)
+        {
+            return CarLane.ThroughLane;
+        }
+        else if (laneDifference < 1.0f)
+        {
+            return CarLane.InterLane;
+        }
+        else
+        {
+            return CarLane.MergingLane;
+        }
+    }
     
     public WaypointProgressTracker FindAheadCar(WaypointProgressTracker thisCar, FindCarOption option = FindCarOption.InSameLane)
     {
@@ -51,7 +77,12 @@ public class CarList : MonoBehaviour
 
         for (int i = listIndex + 1; i < m_AllCars.Count; i++)
         {
-            if (m_AllCars[i].Circuit == thisCar.Circuit ^ option != FindCarOption.InSameLane)
+            if (m_AllCars[i].Circuit != thisCar.Circuit)
+            {
+                continue;
+            }
+
+            if ((GetCarLane(m_AllCars[i]) & GetCarLane(thisCar)) != 0 ^ option != FindCarOption.InSameLane)
             {
                 return m_AllCars[i];
             }
@@ -66,7 +97,12 @@ public class CarList : MonoBehaviour
 
         for (int i = listIndex - 1; i >= 0; i--)
         {
-            if (m_AllCars[i].Circuit == thisCar.Circuit ^ option != FindCarOption.InSameLane)
+            if (m_AllCars[i].Circuit != thisCar.Circuit)
+            {
+                continue;
+            }
+
+            if ((GetCarLane(m_AllCars[i]) & GetCarLane(thisCar)) != 0 ^ option != FindCarOption.InSameLane)
             {
                 return m_AllCars[i];
             }
