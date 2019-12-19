@@ -64,6 +64,40 @@ namespace UnityStandardAssets.Utility
             }
         }
 
+        [Flags]
+        public enum CarLane
+        {
+            ThroughLane = 1,
+            MergingLane = 2,
+            InterLane = 3,
+        }
+
+        public CarLane carLane
+        {
+            get
+            {
+                var laneDifference = CurrentLaneDistance;
+
+                if (laneDifference < -1.0f)
+                {
+                    return CarLane.ThroughLane;
+                }
+                else if (laneDifference < 1.0f)
+                {
+                    return CarLane.InterLane;
+                }
+                else
+                {
+                    return CarLane.MergingLane;
+                }
+            }
+        }
+
+        public void ChangeLane(CarLane lane)
+        {
+            targetLineDistance = lane == CarLane.ThroughLane ? -2.0f : 2.0f;
+        }
+
         // setup script properties
         private void Start()
         {

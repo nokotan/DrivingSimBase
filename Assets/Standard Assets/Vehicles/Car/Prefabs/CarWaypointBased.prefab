@@ -7186,21 +7186,22 @@ MonoBehaviour:
   m_CautiousMaxDistance: 100
   m_CautiousAngularVelocityFactor: 30
   m_SteerSensitivity: 0.01
+  m_SteerAngleThreshold: 0.2
+  m_DesiredSpeed: 30
   m_AccelSensitivity: 0.2
   m_BrakeSensitivity: 0.5
-  m_HeadGapSensitivity: 2
-  m_RequiredHeadGap: 8
+  m_HeadGapSensitivity: 3
+  m_RequiredHeadGap: 10
   m_LateralWanderDistance: 0
   m_LateralWanderSpeed: 0
   m_AccelWanderAmount: 0
   m_AccelWanderSpeed: 0
   m_BrakeCondition: 2
   m_Driving: 1
+  m_AcceptsMergingCar: 1
   m_Target: {fileID: 400060}
   m_StopWhenTargetReached: 0
   m_ReachTargetThreshold: 2
-  m_DesiredSpeed: 20
-  m_SteerAngleThreshold: 0.2
 --- !u!114 &11400024
 MonoBehaviour:
   m_ObjectHideFlags: 0

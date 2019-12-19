@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using UnityStandardAssets.Utility;
 
 namespace UnityStandardAssets.Vehicles.Car
 {
@@ -21,15 +22,19 @@ namespace UnityStandardAssets.Vehicles.Car
         // "wandering" is used to give the cars a more human, less robotic feel. They can waver slightly
         // in speed and direction while driving towards their target.
 
+        [Header("Cautionsness")]
         [SerializeField] [Range(0, 1)] private float m_CautiousSpeedFactor = 0.05f;               // percentage of max speed to use when being maximally cautious
         [SerializeField] [Range(0, 180)] private float m_CautiousMaxAngle = 50f;                  // angle of approaching corner to treat as warranting maximum caution
         [SerializeField] private float m_CautiousMaxDistance = 100f;                              // distance at which distance-based cautiousness begins
         [SerializeField] private float m_CautiousAngularVelocityFactor = 30f;                     // how cautious the AI should be when considering its own current angular velocity (i.e. easing off acceleration if spinning!)
+        [Header("Steering")]
         [SerializeField] private float m_SteerSensitivity = 0.05f;                                // how sensitively the AI uses steering input to turn to the desired direction
-        [Header("Alpha3")]
+        [SerializeField] private float m_SteerAngleThreshold = 1.0f;                              // ステアリング操作の閾値
+        [Header("DesiredSpeedBasedAccel")]
+        [SerializeField] private float m_DesiredSpeed = 60.0f;                                    // 希望速度
         [SerializeField] private float m_AccelSensitivity = 0.04f;                                // How sensitively the AI uses the accelerator to reach the current desired speed
         [SerializeField] private float m_BrakeSensitivity = 1f;                                   // How sensitively the AI uses the brake to reach the current desired speed
-        [Header("Alpha2")]
+        [Header("GapBasedAccel")]
         [SerializeField] private float m_HeadGapSensitivity = 1.0f;
         [SerializeField] private float m_RequiredHeadGap = 8.0f;
         [Header("Wandering")]
@@ -37,13 +42,15 @@ namespace UnityStandardAssets.Vehicles.Car
         [SerializeField] private float m_LateralWanderSpeed = 0.1f;                               // how fast the lateral wandering will fluctuate
         [SerializeField] [Range(0, 1)] private float m_AccelWanderAmount = 0.1f;                  // how much the cars acceleration will wander
         [SerializeField] private float m_AccelWanderSpeed = 0.1f;                                 // how fast the cars acceleration wandering will fluctuate
+        [Header("Setting")]
         [SerializeField] private BrakeCondition m_BrakeCondition = BrakeCondition.TargetDistance; // what should the AI consider when accelerating/braking?
         [SerializeField] private bool m_Driving;                                                  // whether the AI is currently actively driving or stopped.
+        [SerializeField] private bool m_AcceptsMergingCar = true;
+        [Header("Target")]
         [SerializeField] private Transform m_Target;                                              // 'target' the target object to aim for.
         [SerializeField] private bool m_StopWhenTargetReached;                                    // should we stop driving when we reach the target?
         [SerializeField] private float m_ReachTargetThreshold = 2;                                // proximity to target to consider we 'reached' it, and stop driving.
-        [SerializeField] private float m_DesiredSpeed = 60.0f;                                    // 希望速度
-        [SerializeField] private float m_SteerAngleThreshold = 1.0f;                              // ステアリング操作の閾値
+     
 
         private float m_RandomPerlin;             // A random value for the car to base its wander on (so that AI cars don't all wander in the same pattern)
         private CarController m_CarController;    // Reference to actual car controller we are controlling
@@ -52,6 +59,7 @@ namespace UnityStandardAssets.Vehicles.Car
         private float m_AvoidPathOffset;          // direction (-1 or 1) in which to offset path to avoid other car, whilst avoiding
         private Rigidbody m_Rigidbody;
 
+        private bool m_AttemptingLaneChange = false;
 
         private void Awake()
         {
@@ -158,34 +166,53 @@ namespace UnityStandardAssets.Vehicles.Car
                                                   : m_AccelSensitivity;
 
                 // decide the actual amount of accel/brake input to achieve desired speed.
-                var tracker = GetComponent<Utility.WaypointProgressTracker>();
+                var tracker = GetComponent<WaypointProgressTracker>();
 
                 float accel = (desiredSpeed - m_CarController.CurrentSpeed) * accelBrakeSensitivity;
 
-                var siblingLaneAheadCar = CarList.Instance.FindAheadCar(tracker, CarList.FindCarOption.InDifferentLane);
-                
-                if (siblingLaneAheadCar != null && siblingLaneAheadCar.GetComponent<CarController>().LeftWinkerOn)
+                // 合流してくる車両への避譲
+                if (m_AcceptsMergingCar)
                 {
-                    float minGap = Mathf.Min(CarList.Instance.GetAheadGap(tracker), CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane));
+                    var siblingLaneAheadCar = CarList.Instance.FindAheadCar(tracker, CarList.FindCarOption.InDifferentLane);
 
-                    if (minGap < m_RequiredHeadGap || true)
+                    if (siblingLaneAheadCar != null
+                        && ((tracker.carLane == WaypointProgressTracker.CarLane.ThroughLane && siblingLaneAheadCar.GetComponent<CarController>().LeftWinkerOn)
+                        || (tracker.carLane == WaypointProgressTracker.CarLane.MergingLane && siblingLaneAheadCar.GetComponent<CarController>().RightWinkerOn)))
                     {
-                        accel += (1.0f - m_RequiredHeadGap / minGap) * m_HeadGapSensitivity;
-                    }
+                        float minGap = Mathf.Min(CarList.Instance.GetAheadGap(tracker), CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane));                    
+                        accel += (1.0f - m_RequiredHeadGap / minGap) * m_HeadGapSensitivity;                       
+                    }            
                 }
 
                 var aheadCar = CarList.Instance.FindAheadCar(tracker, CarList.FindCarOption.InSameLane);
 
+                // 前方の車両への追従
                 if (aheadCar != null)
                 {
                     float gap = CarList.Instance.GetAheadGap(tracker);
 
-                    if (gap < m_RequiredHeadGap || true)
+                    if (HasMergingSpace() && (GetComponent<CarController>().LeftWinkerOn || GetComponent<CarController>().RightWinkerOn))
                     {
-                        accel += (1.0f - m_RequiredHeadGap / gap) * m_HeadGapSensitivity;
+                        gap = Mathf.Min(gap, CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane));
                     }
+
+                    accel += (1.0f - m_RequiredHeadGap / gap) * m_HeadGapSensitivity;                    
                 }
 
+                // Merging Lane Specific
+                if (tracker.carLane == WaypointProgressTracker.CarLane.MergingLane)
+                {
+                    if (m_AttemptingLaneChange)
+                    {
+                        GetComponent<CarController>().LeftWinkerOn |= true;
+                       
+                        if (HasMergingSpace())
+                        {
+                            tracker.ChangeLane(WaypointProgressTracker.CarLane.ThroughLane);
+                        }
+                    }
+                }
+                
                 accel = Mathf.Clamp(accel, -1, 1);
 
                 // add acceleration 'wander', which also prevents AI from seeming too uniform and robotic in their driving
@@ -208,8 +235,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 float steer = Mathf.Clamp(targetAngle*m_SteerSensitivity, -1, 1)*Mathf.Sign(m_CarController.CurrentSpeed);
 
                 // feed input to the car controller.
-                m_CarController.Move(steer, accel, accel, 0f);
-                m_CarController.RightWinkerOn = true;
+                m_CarController.Move(steer, accel, accel, 0f);                
 
                 // if appropriate, stop driving when we're close enough to the target.
                 if (m_StopWhenTargetReached && localTarget.magnitude < m_ReachTargetThreshold)
@@ -217,6 +243,16 @@ namespace UnityStandardAssets.Vehicles.Car
                     m_Driving = false;
                 }
             }
+        }
+
+
+        // 合流可能かどうか
+        private bool HasMergingSpace()
+        {
+            var tracker = GetComponent<WaypointProgressTracker>();
+
+            return CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane) >= 6.0f
+                && CarList.Instance.GetBehindGap(tracker, CarList.FindCarOption.InDifferentLane) >= 6.0f;
         }
 
 
@@ -229,18 +265,18 @@ namespace UnityStandardAssets.Vehicles.Car
                 if (otherAI != null)
                 {
                     // we'll take evasive action for 1 second
-                    m_AvoidOtherCarTime = Time.time + 1;
+                    // m_AvoidOtherCarTime = Time.time + 1;
 
                     // but who's in front?...
                     if (Vector3.Angle(transform.forward, otherAI.transform.position - transform.position) < 90)
                     {
                         // the other ai is in front, so it is only good manners that we ought to brake...
-                        m_AvoidOtherCarSlowdown = 0.5f;
+                        // m_AvoidOtherCarSlowdown = 0.5f;
                     }
                     else
                     {
                         // we're in front! ain't slowing down for anybody...
-                        m_AvoidOtherCarSlowdown = 1;
+                        // m_AvoidOtherCarSlowdown = 1;
                     }
 
                     // both cars should take evasive action by driving along an offset from the path centre,
@@ -249,6 +285,14 @@ namespace UnityStandardAssets.Vehicles.Car
                     float otherCarAngle = Mathf.Atan2(otherCarLocalDelta.x, otherCarLocalDelta.z);
                     m_AvoidPathOffset = m_LateralWanderDistance*-Mathf.Sign(otherCarAngle);
                 }
+            }
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if (other.tag == "MergeTrigger")
+            {
+                m_AttemptingLaneChange = true;
             }
         }
 
