@@ -60,6 +60,7 @@ namespace UnityStandardAssets.Vehicles.Car
         private Rigidbody m_Rigidbody;
 
         private bool m_AttemptingLaneChange = false;
+        private bool m_StartedLaneChanging = false;
 
         private void Awake()
         {
@@ -191,9 +192,12 @@ namespace UnityStandardAssets.Vehicles.Car
                 {
                     float gap = CarList.Instance.GetAheadGap(tracker);
 
-                    if (HasMergingSpace() && (GetComponent<CarController>().LeftWinkerOn || GetComponent<CarController>().RightWinkerOn))
+                    if (m_AttemptingLaneChange)
                     {
-                        gap = Mathf.Min(gap, CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane));
+                        if (HasMergingSpace())
+                        {
+                            gap = Mathf.Min(gap, CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane));
+                        }
                     }
 
                     accel += (1.0f - m_RequiredHeadGap / gap) * m_HeadGapSensitivity;                    
@@ -206,9 +210,14 @@ namespace UnityStandardAssets.Vehicles.Car
                     {
                         GetComponent<CarController>().LeftWinkerOn |= true;
                        
-                        if (HasMergingSpace())
+                        if (HasMergingHeads())
                         {
                             tracker.ChangeLane(WaypointProgressTracker.CarLane.ThroughLane);
+                            m_StartedLaneChanging = true;
+                        }
+                        else if (!m_StartedLaneChanging && !HasMergingSpace())
+                        {
+                            accel = (desiredSpeed * 0.6f - m_CarController.CurrentSpeed) * accelBrakeSensitivity;
                         }
                     }
                 }
@@ -247,12 +256,20 @@ namespace UnityStandardAssets.Vehicles.Car
 
 
         // çáó¨â¬î\Ç©Ç«Ç§Ç©
-        private bool HasMergingSpace()
+        private bool HasMergingHeads()
         {
             var tracker = GetComponent<WaypointProgressTracker>();
 
             return CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane) >= 6.0f
-                && CarList.Instance.GetBehindGap(tracker, CarList.FindCarOption.InDifferentLane) >= 6.0f;
+                && CarList.Instance.GetBehindGap(tracker, CarList.FindCarOption.InDifferentLane) >= 8.0f;
+        }
+
+        private bool HasMergingSpace()
+        {
+            var tracker = GetComponent<WaypointProgressTracker>();
+
+            return Mathf.Abs(CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane) - 
+                 CarList.Instance.GetBehindGap(tracker, CarList.FindCarOption.InDifferentLane)) >= 14.0f;
         }
 
 
