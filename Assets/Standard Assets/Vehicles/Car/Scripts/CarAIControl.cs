@@ -37,6 +37,7 @@ namespace UnityStandardAssets.Vehicles.Car
         [Header("GapBasedAccel")]
         [SerializeField] private float m_HeadGapSensitivity = 1.0f;
         [SerializeField] private float m_RequiredHeadGap = 8.0f;
+        [SerializeField] private float m_YieldingRequiredHeadGap = 12.0f;
         [Header("Wandering")]
         [SerializeField] private float m_LateralWanderDistance = 3f;                              // how far the car will wander laterally towards its target
         [SerializeField] private float m_LateralWanderSpeed = 0.1f;                               // how fast the lateral wandering will fluctuate
@@ -181,7 +182,7 @@ namespace UnityStandardAssets.Vehicles.Car
                         || (tracker.carLane == WaypointProgressTracker.CarLane.MergingLane && siblingLaneAheadCar.GetComponent<CarController>().RightWinkerOn)))
                     {
                         float minGap = Mathf.Min(CarList.Instance.GetAheadGap(tracker), CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane));                    
-                        accel += (1.0f - m_RequiredHeadGap / minGap) * m_HeadGapSensitivity;                       
+                        accel += (1.0f - m_YieldingRequiredHeadGap / minGap) * m_HeadGapSensitivity;                       
                     }            
                 }
 

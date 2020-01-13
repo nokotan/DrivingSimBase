@@ -6,12 +6,36 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/ExperimentTracks/TestTruck.unity
+    guid: 74467835859d81442baac5b799a15d3a
+  - enabled: 1
     path: Assets/ExperimentTracks/MergingLane/Case1.unity
     guid: 537108b34d4c5654d9f1f535fb6c045e
   - enabled: 1
-    path: Assets/Scenes/WithInformHighway.unity
-    guid: 202fa5322c91d45489e9988abee3d6d9
+    path: Assets/ExperimentTracks/MergingLane/Case2.unity
+    guid: 7921b9daf2b1e3d418ca8d637765c4d6
+  - enabled: 1
+    path: Assets/ExperimentTracks/MergingLane/Case3.unity
+    guid: 8a17c79bbe7fcb04486886afa8ae5c97
+  - enabled: 1
+    path: Assets/ExperimentTracks/MergingLane/Case4.unity
+    guid: d8601595acaab804fa59414198f283e7
+  - enabled: 1
+    path: Assets/ExperimentTracks/ThroughLane/Case1.unity
+    guid: 9e4ed9fd35102594fbef31abe22e3b24
+  - enabled: 1
+    path: Assets/ExperimentTracks/ThroughLane/Case2.unity
+    guid: d3b49de911b3a414d82806e500900dfc
+  - enabled: 1
+    path: Assets/ExperimentTracks/ThroughLane/Case3.unity
+    guid: 29ceae470e120954ca3d6e1134f1111c
+  - enabled: 1
+    path: Assets/ExperimentTracks/ThroughLane/Case4.unity
+    guid: f9b5b67cae9fbde4b845199a01ec1091
   - enabled: 1
     path: Assets/Scenes/WithoutInformHighway.unity
     guid: 7ce9665e299e15d48bda3c710bf53018
+  - enabled: 1
+    path: Assets/Scenes/WithInformHighway.unity
+    guid: 202fa5322c91d45489e9988abee3d6d9
   m_configObjects: {}

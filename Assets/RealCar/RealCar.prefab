@@ -5857,7 +5857,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &4464120357620090
 Transform:
   m_ObjectHideFlags: 0
@@ -5884,10 +5884,10 @@ ReflectionProbe:
   m_Type: 0
   m_Mode: 1
   m_RefreshMode: 1
-  m_TimeSlicingMode: 2
+  m_TimeSlicingMode: 1
   m_Resolution: 2048
   m_UpdateFrequency: 0
-  m_BoxSize: {x: 0.2, y: 0.2, z: 0.15}
+  m_BoxSize: {x: 0.3, y: 0.3, z: 0.2}
   m_BoxOffset: {x: 0, y: 0, z: 0}
   m_NearClip: 0.3
   m_FarClip: 100
@@ -6490,13 +6490,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 306570107105495738}
-  m_LocalRotation: {x: -0.63880235, y: 0.13061924, z: 0.1331597, w: 0.7464173}
+  m_LocalRotation: {x: -0.640627, y: 0.12135483, z: 0.12233662, w: 0.7482672}
   m_LocalPosition: {x: 0.871, y: 1.06, z: 0.496}
-  m_LocalScale: {x: 0.02, y: 1, z: 0.01}
+  m_LocalScale: {x: 0.025, y: 1, z: 0.015}
   m_Children: []
   m_Father: {fileID: 5217533108191900617}
   m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: -81.269005, y: 9.429001, z: 12.134001}
+  m_LocalEulerAnglesHint: {x: -81.269005, y: 9.429001, z: 10.474001}
 --- !u!33 &171380711672599605
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -6785,13 +6785,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2717592446130066854}
-  m_LocalRotation: {x: -0.6439086, y: -0.21572848, z: -0.1837289, w: 0.71069443}
+  m_LocalRotation: {x: -0.65038925, y: -0.19537902, z: -0.16131602, w: 0.7160992}
   m_LocalPosition: {x: -0.871, y: 1.06, z: 0.496}
-  m_LocalScale: {x: 0.02, y: 1, z: 0.01}
+  m_LocalScale: {x: 0.025, y: 1, z: 0.015}
   m_Children: []
   m_Father: {fileID: 8378986375803172897}
   m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: -83.997, y: -42.031002, z: 9.1710005}
+  m_LocalEulerAnglesHint: {x: -84, y: -42.031002, z: 12.772}
 --- !u!33 &7368565610896833834
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -6955,13 +6955,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6114843160584318947}
-  m_LocalRotation: {x: 0, y: 0.42261827, z: 0, w: 0.9063079}
+  m_LocalRotation: {x: 0, y: 0.60876137, z: 0, w: 0.7933534}
   m_LocalPosition: {x: 0.32, y: 1.29, z: 0.03}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 4183991538252054}
   m_RootOrder: 7
-  m_LocalEulerAnglesHint: {x: 0, y: 50, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 75, z: 0}
 --- !u!20 &8689826749237766756
 Camera:
   m_ObjectHideFlags: 0
@@ -7021,7 +7021,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &8895329675556037770
 Transform:
   m_ObjectHideFlags: 0
@@ -7048,10 +7048,10 @@ ReflectionProbe:
   m_Type: 0
   m_Mode: 1
   m_RefreshMode: 1
-  m_TimeSlicingMode: 2
+  m_TimeSlicingMode: 1
   m_Resolution: 2048
   m_UpdateFrequency: 0
-  m_BoxSize: {x: 0.2, y: 0.2, z: 0.15}
+  m_BoxSize: {x: 0.3, y: 0.3, z: 0.2}
   m_BoxOffset: {x: 0, y: 0, z: 0}
   m_NearClip: 0.3
   m_FarClip: 100
@@ -7203,13 +7203,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7619829345587024475}
-  m_LocalRotation: {x: 0, y: -0.42261827, z: 0, w: 0.9063079}
+  m_LocalRotation: {x: 0, y: -0.60876137, z: 0, w: 0.7933534}
   m_LocalPosition: {x: 0.32, y: 1.29, z: 0.03}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 4183991538252054}
   m_RootOrder: 5
-  m_LocalEulerAnglesHint: {x: 0, y: -50, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -75, z: 0}
 --- !u!20 &3809619996471803129
 Camera:
   m_ObjectHideFlags: 0
@@ -7423,7 +7423,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &739451440967664062
 Transform:
   m_ObjectHideFlags: 0
@@ -7450,7 +7450,7 @@ ReflectionProbe:
   m_Type: 0
   m_Mode: 1
   m_RefreshMode: 1
-  m_TimeSlicingMode: 2
+  m_TimeSlicingMode: 1
   m_Resolution: 2048
   m_UpdateFrequency: 0
   m_BoxSize: {x: 0.3, y: 0.2, z: 0.1}
