@@ -1,8 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEditor.SceneManagement;
 
+[ExecuteAlways]
 public class DependentScene : MonoBehaviour
 {
     [SerializeField]
@@ -29,8 +32,15 @@ public class DependentScene : MonoBehaviour
         foreach (var name in parentScenes)
         {
             if (!FindSceneExistence(name))
-            {
-                SceneManager.LoadScene(name, LoadSceneMode.Additive);
+            {              
+                if (Application.IsPlaying(this))
+                {
+                    SceneManager.LoadScene(name, LoadSceneMode.Additive);
+                }
+                else
+                {
+                    EditorSceneManager.OpenScene($"Assets/{name}.unity", OpenSceneMode.Additive);
+                }
             }
         }
     }

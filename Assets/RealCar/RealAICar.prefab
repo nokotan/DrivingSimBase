@@ -857,12 +857,14 @@ MonoBehaviour:
   m_CautiousAngularVelocityFactor: 30
   m_SteerSensitivity: 0.01
   m_SteerAngleThreshold: 0.2
-  m_DesiredSpeed: 30
   m_AccelSensitivity: 0.2
   m_BrakeSensitivity: 0.5
-  m_HeadGapSensitivity: 3
-  m_RequiredHeadGap: 10
+  m_DesiredSpeed: 30
+  m_DesiredSpeedSensitivity: 1
+  m_RequiredHeadGap: 12
+  m_HeadGapSensitivity: 5
   m_YieldingRequiredHeadGap: 20
+  m_YieldingSensitivity: 3
   m_LateralWanderDistance: 0
   m_LateralWanderSpeed: 0
   m_AccelWanderAmount: 0
