@@ -65,6 +65,8 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private bool m_AttemptingLaneChange = false;
         private bool m_StartedLaneChanging = false;
+        private bool m_HasMergingHead = false;
+        private bool m_HasMergingSpace = false;
 
         private void Awake()
         {
@@ -175,12 +177,15 @@ namespace UnityStandardAssets.Vehicles.Car
 
                 float accel = (desiredSpeed - m_CarController.CurrentSpeed) * m_DesiredSpeedSensitivity;
 
+                var aheadCar = CarList.Instance.FindAheadCar(tracker, CarList.FindCarOption.InSameLane);
+                
                 // �������Ă���ԗ��ւ̔���
                 if (m_AcceptsMergingCar)
                 {
                     var siblingLaneAheadCar = CarList.Instance.FindAheadCar(tracker, CarList.FindCarOption.InDifferentLane);
-
-                    if (siblingLaneAheadCar != null
+                    
+                    if (siblingLaneAheadCar != null && aheadCar != null
+                        && !aheadCar.CompareTag("MergeLaneCar")
                         && ((tracker.carLane == WaypointProgressTracker.CarLane.ThroughLane && siblingLaneAheadCar.GetComponent<CarController>().LeftWinkerOn)
                         || (tracker.carLane == WaypointProgressTracker.CarLane.MergingLane && siblingLaneAheadCar.GetComponent<CarController>().RightWinkerOn)))
                     {
@@ -188,23 +193,24 @@ namespace UnityStandardAssets.Vehicles.Car
                         accel += (1.0f - m_YieldingRequiredHeadGap / minGap) * m_YieldingSensitivity;                       
                     }            
                 }
-
-                var aheadCar = CarList.Instance.FindAheadCar(tracker, CarList.FindCarOption.InSameLane);
-
+                
                 // �O���̎ԗ��ւ̒Ǐ]
                 if (aheadCar != null)
                 {
                     float gap = CarList.Instance.GetAheadGap(tracker);
-
-                    if (m_AttemptingLaneChange)
+                    float gapFactor = m_RequiredHeadGap / gap;
+                    
+                    if (tracker.carLane == WaypointProgressTracker.CarLane.MergingLane 
+                        && m_AttemptingLaneChange 
+                        && (m_HasMergingSpace = HasMergingSpace()))
                     {
-                        if (HasMergingSpace())
-                        {
-                            gap = Mathf.Min(gap, CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane));
-                        }
+                        gap = Mathf.Min(gap, CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane));
+                        accel = (1.0f - Mathf.Max(m_RequiredHeadGap * 0.5f, 7.0f) / gap) * m_HeadGapSensitivity;
                     }
-
-                    accel += (1.0f - m_RequiredHeadGap / gap) * m_HeadGapSensitivity;                    
+                    else
+                    {
+                        accel += (1.0f - m_RequiredHeadGap / gap) * m_HeadGapSensitivity;
+                    }
                 }
 
                 // Merging Lane Specific
@@ -213,27 +219,26 @@ namespace UnityStandardAssets.Vehicles.Car
                     if (m_AttemptingLaneChange)
                     {
                         GetComponent<CarController>().LeftWinkerOn |= true;
-                       
-                        if (HasMergingHeads())
+
+                        if (m_HasMergingHead = HasMergingHeads())
                         {
                             tracker.ChangeLane(WaypointProgressTracker.CarLane.ThroughLane);
                             m_StartedLaneChanging = true;
                         }
                         else if (!m_StartedLaneChanging && !HasMergingSpace())
                         {
-                            accel = (desiredSpeed * 0.6f - m_CarController.CurrentSpeed) * m_DesiredSpeedSensitivity;
+                            accel = (desiredSpeed * 0.3f - m_CarController.CurrentSpeed) * m_DesiredSpeedSensitivity;
                         }
                     }
                 }
-                
-                accel = Mathf.Clamp(accel, -1, 1);
 
                 float accelBrakeSensitivity = (accel < 0.0f)
                                                  ? m_BrakeSensitivity
                                                  : m_AccelSensitivity;
-
+                
                 accel *= accelBrakeSensitivity;
-
+                accel = Mathf.Clamp(accel, -1, 1);
+                
                 // add acceleration 'wander', which also prevents AI from seeming too uniform and robotic in their driving
                 // i.e. increasing the accel wander amount can introduce jostling and bumps between AI cars in a race
                 accel *= (1 - m_AccelWanderAmount) +
@@ -270,8 +275,8 @@ namespace UnityStandardAssets.Vehicles.Car
         {
             var tracker = GetComponent<WaypointProgressTracker>();
 
-            return CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane) >= 6.0f
-                && CarList.Instance.GetBehindGap(tracker, CarList.FindCarOption.InDifferentLane) >= 8.0f;
+            return CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane) >= 7.0f
+                && CarList.Instance.GetBehindGap(tracker, CarList.FindCarOption.InDifferentLane) >= 7.0f;
         }
 
         private bool HasMergingSpace()

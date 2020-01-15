@@ -862,9 +862,9 @@ MonoBehaviour:
   m_DesiredSpeed: 30
   m_DesiredSpeedSensitivity: 1
   m_RequiredHeadGap: 12
-  m_HeadGapSensitivity: 5
+  m_HeadGapSensitivity: 6
   m_YieldingRequiredHeadGap: 20
-  m_YieldingSensitivity: 3
+  m_YieldingSensitivity: 4
   m_LateralWanderDistance: 0
   m_LateralWanderSpeed: 0
   m_AccelWanderAmount: 0

@@ -10,14 +10,17 @@ public class DependentScene : MonoBehaviour
 {
     [SerializeField]
     string[] parentScenes;
-    
+
     bool FindSceneExistence(string sceneName)
     {
+        Scene checkedScene = SceneManager.GetSceneByPath($"Assets/{sceneName}.unity");
+
         for (int i = 0; i < SceneManager.sceneCount; i++)
         {
             Scene s = SceneManager.GetSceneAt(i);
-
-            if (s.name == sceneName)
+            Debug.Log($"Loaded Scene is {s.name}, {checkedScene.name}");
+            
+            if (s == checkedScene)
             {
                 return true;
             }
