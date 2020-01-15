@@ -29,9 +29,9 @@ namespace UnityStandardAssets.Vehicles.Car
         [SerializeField] private float m_CautiousAngularVelocityFactor = 30f;                     // how cautious the AI should be when considering its own current angular velocity (i.e. easing off acceleration if spinning!)
         [Header("Steering")]
         [SerializeField] private float m_SteerSensitivity = 0.05f;                                // how sensitively the AI uses steering input to turn to the desired direction
-        [SerializeField] private float m_SteerAngleThreshold = 1.0f;                              // ƒXƒeƒAƒŠƒ“ƒO‘€ì‚Ìè‡’l
+        [SerializeField] private float m_SteerAngleThreshold = 1.0f;                              // ã‚¹ãƒ†ã‚¢ãƒªãƒ³ã‚°æ“ä½œã®é–¾å€¤
         [Header("DesiredSpeedBasedAccel")]
-        [SerializeField] private float m_DesiredSpeed = 60.0f;                                    // Šó–]‘¬“x
+        [SerializeField] private float m_DesiredSpeed = 60.0f;                                    // å¸Œæœ›é€Ÿåº¦
         [SerializeField] private float m_AccelSensitivity = 0.04f;                                // How sensitively the AI uses the accelerator to reach the current desired speed
         [SerializeField] private float m_BrakeSensitivity = 1f;                                   // How sensitively the AI uses the brake to reach the current desired speed
         [Header("GapBasedAccel")]
@@ -172,7 +172,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
                 float accel = (desiredSpeed - m_CarController.CurrentSpeed) * accelBrakeSensitivity;
 
-                // ‡—¬‚µ‚Ä‚­‚éÔ—¼‚Ö‚Ì”ğ÷
+                // åˆæµã—ã¦ãã‚‹è»Šä¸¡ã¸ã®é¿è­²
                 if (m_AcceptsMergingCar)
                 {
                     var siblingLaneAheadCar = CarList.Instance.FindAheadCar(tracker, CarList.FindCarOption.InDifferentLane);
@@ -188,7 +188,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
                 var aheadCar = CarList.Instance.FindAheadCar(tracker, CarList.FindCarOption.InSameLane);
 
-                // ‘O•û‚ÌÔ—¼‚Ö‚Ì’Ç]
+                // å‰æ–¹ã®è»Šä¸¡ã¸ã®è¿½å¾“
                 if (aheadCar != null)
                 {
                     float gap = CarList.Instance.GetAheadGap(tracker);
@@ -256,7 +256,7 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
 
-        // ‡—¬‰Â”\‚©‚Ç‚¤‚©
+        // åˆæµå¯èƒ½ã‹ã©ã†ã‹
         private bool HasMergingHeads()
         {
             var tracker = GetComponent<WaypointProgressTracker>();

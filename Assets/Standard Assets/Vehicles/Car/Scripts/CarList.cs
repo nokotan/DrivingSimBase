@@ -20,7 +20,7 @@ public class CarList : MonoBehaviour
     void Start()
     {
         Instance = this;
-
+        
         m_AllCars.AddRange(FindObjectsOfType<WaypointProgressTracker>());
         BuildAllCarsConsistency();
     }
