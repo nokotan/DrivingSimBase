@@ -29,15 +29,18 @@ namespace UnityStandardAssets.Vehicles.Car
         [SerializeField] private float m_CautiousAngularVelocityFactor = 30f;                     // how cautious the AI should be when considering its own current angular velocity (i.e. easing off acceleration if spinning!)
         [Header("Steering")]
         [SerializeField] private float m_SteerSensitivity = 0.05f;                                // how sensitively the AI uses steering input to turn to the desired direction
-        [SerializeField] private float m_SteerAngleThreshold = 1.0f;                              // ステアリング操作の閾値
-        [Header("DesiredSpeedBasedAccel")]
-        [SerializeField] private float m_DesiredSpeed = 60.0f;                                    // 希望速度
+        [SerializeField] private float m_SteerAngleThreshold = 1.0f;                              // �X�e�A�����O�����臒l
+        [Header("Brake/AccelSensitivity")]
         [SerializeField] private float m_AccelSensitivity = 0.04f;                                // How sensitively the AI uses the accelerator to reach the current desired speed
         [SerializeField] private float m_BrakeSensitivity = 1f;                                   // How sensitively the AI uses the brake to reach the current desired speed
+        [Header("DesiredSpeedBasedAccel")]
+        [SerializeField] private float m_DesiredSpeed = 60.0f;                                    // ��]���x
+        [SerializeField] private float m_DesiredSpeedSensitivity = 0.01f;
         [Header("GapBasedAccel")]
-        [SerializeField] private float m_HeadGapSensitivity = 1.0f;
         [SerializeField] private float m_RequiredHeadGap = 8.0f;
+        [SerializeField] private float m_HeadGapSensitivity = 1.0f;
         [SerializeField] private float m_YieldingRequiredHeadGap = 12.0f;
+        [SerializeField] private float m_YieldingSensitivity = 0.6f;
         [Header("Wandering")]
         [SerializeField] private float m_LateralWanderDistance = 3f;                              // how far the car will wander laterally towards its target
         [SerializeField] private float m_LateralWanderSpeed = 0.1f;                               // how fast the lateral wandering will fluctuate
@@ -163,16 +166,16 @@ namespace UnityStandardAssets.Vehicles.Car
                 }
 
                 // use different sensitivity depending on whether accelerating or braking:
-                float accelBrakeSensitivity = (desiredSpeed < m_CarController.CurrentSpeed)
-                                                  ? m_BrakeSensitivity
-                                                  : m_AccelSensitivity;
+                // float accelBrakeSensitivity = (desiredSpeed < m_CarController.CurrentSpeed)
+                //                                  ? m_BrakeSensitivity
+                //                                  : m_AccelSensitivity;
 
                 // decide the actual amount of accel/brake input to achieve desired speed.
                 var tracker = GetComponent<WaypointProgressTracker>();
 
-                float accel = (desiredSpeed - m_CarController.CurrentSpeed) * accelBrakeSensitivity;
+                float accel = (desiredSpeed - m_CarController.CurrentSpeed) * m_DesiredSpeedSensitivity;
 
-                // 合流してくる車両への避譲
+                // �������Ă���ԗ��ւ̔���
                 if (m_AcceptsMergingCar)
                 {
                     var siblingLaneAheadCar = CarList.Instance.FindAheadCar(tracker, CarList.FindCarOption.InDifferentLane);
@@ -182,13 +185,13 @@ namespace UnityStandardAssets.Vehicles.Car
                         || (tracker.carLane == WaypointProgressTracker.CarLane.MergingLane && siblingLaneAheadCar.GetComponent<CarController>().RightWinkerOn)))
                     {
                         float minGap = Mathf.Min(CarList.Instance.GetAheadGap(tracker), CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane));                    
-                        accel += (1.0f - m_YieldingRequiredHeadGap / minGap) * m_HeadGapSensitivity;                       
+                        accel += (1.0f - m_YieldingRequiredHeadGap / minGap) * m_YieldingSensitivity;                       
                     }            
                 }
 
                 var aheadCar = CarList.Instance.FindAheadCar(tracker, CarList.FindCarOption.InSameLane);
 
-                // 前方の車両への追従
+                // �O���̎ԗ��ւ̒Ǐ]
                 if (aheadCar != null)
                 {
                     float gap = CarList.Instance.GetAheadGap(tracker);
@@ -218,12 +221,18 @@ namespace UnityStandardAssets.Vehicles.Car
                         }
                         else if (!m_StartedLaneChanging && !HasMergingSpace())
                         {
-                            accel = (desiredSpeed * 0.6f - m_CarController.CurrentSpeed) * accelBrakeSensitivity;
+                            accel = (desiredSpeed * 0.6f - m_CarController.CurrentSpeed) * m_DesiredSpeedSensitivity;
                         }
                     }
                 }
                 
                 accel = Mathf.Clamp(accel, -1, 1);
+
+                float accelBrakeSensitivity = (accel < 0.0f)
+                                                 ? m_BrakeSensitivity
+                                                 : m_AccelSensitivity;
+
+                accel *= accelBrakeSensitivity;
 
                 // add acceleration 'wander', which also prevents AI from seeming too uniform and robotic in their driving
                 // i.e. increasing the accel wander amount can introduce jostling and bumps between AI cars in a race
@@ -256,7 +265,7 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
 
-        // 合流可能かどうか
+        // �����\���ǂ���
         private bool HasMergingHeads()
         {
             var tracker = GetComponent<WaypointProgressTracker>();
