@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+
+#if UNITY_EDITOR
 using UnityEditor.SceneManagement;
+#endif
 
 [ExecuteAlways]
 public class DependentScene : MonoBehaviour
@@ -40,10 +43,12 @@ public class DependentScene : MonoBehaviour
                 {
                     SceneManager.LoadScene(name, LoadSceneMode.Additive);
                 }
+#if UNITY_EDITOR
                 else
                 {
                     EditorSceneManager.OpenScene($"Assets/{name}.unity", OpenSceneMode.Additive);
                 }
+#endif
             }
         }
     }
