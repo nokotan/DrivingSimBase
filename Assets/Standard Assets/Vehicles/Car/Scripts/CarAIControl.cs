@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using Random = UnityEngine.Random;
 using UnityStandardAssets.Utility;
@@ -29,18 +30,27 @@ namespace UnityStandardAssets.Vehicles.Car
         [SerializeField] private float m_CautiousAngularVelocityFactor = 30f;                     // how cautious the AI should be when considering its own current angular velocity (i.e. easing off acceleration if spinning!)
         [Header("Steering")]
         [SerializeField] private float m_SteerSensitivity = 0.05f;                                // how sensitively the AI uses steering input to turn to the desired direction
-        [SerializeField] private float m_SteerAngleThreshold = 1.0f;                              // �X�e�A�����O�����臒l
+        [SerializeField] private float m_SteerAngleThreshold = 1.0f;                              // ステアリング操作の閾値
         [Header("Brake/AccelSensitivity")]
         [SerializeField] private float m_AccelSensitivity = 0.04f;                                // How sensitively the AI uses the accelerator to reach the current desired speed
         [SerializeField] private float m_BrakeSensitivity = 1f;                                   // How sensitively the AI uses the brake to reach the current desired speed
         [Header("DesiredSpeedBasedAccel")]
-        [SerializeField] private float m_DesiredSpeed = 60.0f;                                    // ��]���x
+        [SerializeField] private float m_DesiredSpeed = 60.0f;                                    // 希望速度
         [SerializeField] private float m_DesiredSpeedSensitivity = 0.01f;
         [Header("GapBasedAccel")]
         [SerializeField] private float m_RequiredHeadGap = 8.0f;
         [SerializeField] private float m_HeadGapSensitivity = 1.0f;
         [SerializeField] private float m_YieldingRequiredHeadGap = 12.0f;
         [SerializeField] private float m_YieldingSensitivity = 0.6f;
+
+        [Header("MergingAccel")] 
+        [SerializeField] private float m_MergingWaitingDesiredSpeedFactor = 0.6f;
+        [SerializeField] private float m_MergingRequiredHeadGapFactor = 0.6f;
+
+        [Header("MergingRequirements")] [SerializeField]
+        private float m_MergingRequiredAheadGap = 6.0f;
+        [SerializeField] float m_MergingRequiredBackGap = 8.0f;
+        [SerializeField] float m_MergingRequiredSpace = 14.0f;
         [Header("Wandering")]
         [SerializeField] private float m_LateralWanderDistance = 3f;                              // how far the car will wander laterally towards its target
         [SerializeField] private float m_LateralWanderSpeed = 0.1f;                               // how fast the lateral wandering will fluctuate
@@ -62,21 +72,25 @@ namespace UnityStandardAssets.Vehicles.Car
         private float m_AvoidOtherCarSlowdown;    // how much to slow down due to colliding with another car, whilst avoiding
         private float m_AvoidPathOffset;          // direction (-1 or 1) in which to offset path to avoid other car, whilst avoiding
         private Rigidbody m_Rigidbody;
+        private WaypointProgressTracker m_Tracker;
 
-        private bool m_AttemptingLaneChange = false;
-        private bool m_StartedLaneChanging = false;
-        private bool m_HasMergingHead = false;
-        private bool m_HasMergingSpace = false;
+        private StrategyBase DrivingStrategy;
+        [Header("Debug")]
+        [SerializeField] string StrategyString;
 
+        [SerializeField] private float FrameCount;
+        
         private void Awake()
         {
             // get the car controller reference
             m_CarController = GetComponent<CarController>();
-
+            m_Tracker = GetComponent<WaypointProgressTracker>();
+            
             // give the random perlin a random value
             m_RandomPerlin = Random.value*100;
 
             m_Rigidbody = GetComponent<Rigidbody>();
+            DrivingStrategy = new NormalStrategy(this);
         }
 
 
@@ -173,65 +187,11 @@ namespace UnityStandardAssets.Vehicles.Car
                 //                                  : m_AccelSensitivity;
 
                 // decide the actual amount of accel/brake input to achieve desired speed.
-                var tracker = GetComponent<WaypointProgressTracker>();
-
-                float accel = (desiredSpeed - m_CarController.CurrentSpeed) * m_DesiredSpeedSensitivity;
-
-                var aheadCar = CarList.Instance.FindAheadCar(tracker, CarList.FindCarOption.InSameLane);
+                FrameCount = GetMergingSpace();
+                var accel = DrivingStrategy.Tick(desiredSpeed);
+                DrivingStrategy = DrivingStrategy.nextStrategy;
+                StrategyString = DrivingStrategy.GetType().Name;
                 
-                // �������Ă���ԗ��ւ̔���
-                if (m_AcceptsMergingCar)
-                {
-                    var siblingLaneAheadCar = CarList.Instance.FindAheadCar(tracker, CarList.FindCarOption.InDifferentLane);
-                    
-                    if (siblingLaneAheadCar != null && aheadCar != null
-                        && !aheadCar.CompareTag("MergeLaneCar")
-                        && ((tracker.carLane == WaypointProgressTracker.CarLane.ThroughLane && siblingLaneAheadCar.GetComponent<CarController>().LeftWinkerOn)
-                        || (tracker.carLane == WaypointProgressTracker.CarLane.MergingLane && siblingLaneAheadCar.GetComponent<CarController>().RightWinkerOn)))
-                    {
-                        float minGap = Mathf.Min(CarList.Instance.GetAheadGap(tracker), CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane));                    
-                        accel += (1.0f - m_YieldingRequiredHeadGap / minGap) * m_YieldingSensitivity;                       
-                    }            
-                }
-                
-                // �O���̎ԗ��ւ̒Ǐ]
-                if (aheadCar != null)
-                {
-                    float gap = CarList.Instance.GetAheadGap(tracker);
-                    float gapFactor = m_RequiredHeadGap / gap;
-                    
-                    if (tracker.carLane == WaypointProgressTracker.CarLane.MergingLane 
-                        && m_AttemptingLaneChange 
-                        && (m_HasMergingSpace = HasMergingSpace()))
-                    {
-                        gap = Mathf.Min(gap, CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane));
-                        accel = (1.0f - Mathf.Max(m_RequiredHeadGap * 0.5f, 7.0f) / gap) * m_HeadGapSensitivity;
-                    }
-                    else
-                    {
-                        accel += (1.0f - m_RequiredHeadGap / gap) * m_HeadGapSensitivity;
-                    }
-                }
-
-                // Merging Lane Specific
-                if (tracker.carLane == WaypointProgressTracker.CarLane.MergingLane)
-                {
-                    if (m_AttemptingLaneChange)
-                    {
-                        GetComponent<CarController>().LeftWinkerOn |= true;
-
-                        if (m_HasMergingHead = HasMergingHeads())
-                        {
-                            tracker.ChangeLane(WaypointProgressTracker.CarLane.ThroughLane);
-                            m_StartedLaneChanging = true;
-                        }
-                        else if (!m_StartedLaneChanging && !HasMergingSpace())
-                        {
-                            accel = (desiredSpeed * 0.3f - m_CarController.CurrentSpeed) * m_DesiredSpeedSensitivity;
-                        }
-                    }
-                }
-
                 float accelBrakeSensitivity = (accel < 0.0f)
                                                  ? m_BrakeSensitivity
                                                  : m_AccelSensitivity;
@@ -270,23 +230,34 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
 
-        // �����\���ǂ���
+        // 合流可能かどうか
         private bool HasMergingHeads()
         {
-            var tracker = GetComponent<WaypointProgressTracker>();
-
-            return CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane) >= 7.0f
-                && CarList.Instance.GetBehindGap(tracker, CarList.FindCarOption.InDifferentLane) >= 7.0f;
+            return CarList.Instance.GetAheadGap(m_Tracker, CarList.FindCarOption.InDifferentLane) >= m_MergingRequiredAheadGap
+                && CarList.Instance.GetBehindGap(m_Tracker, CarList.FindCarOption.InDifferentLane) >= m_MergingRequiredBackGap;
         }
 
-        private bool HasMergingSpace()
+        private float GetMergingSpace()
         {
-            var tracker = GetComponent<WaypointProgressTracker>();
-
-            return Mathf.Abs(CarList.Instance.GetAheadGap(tracker, CarList.FindCarOption.InDifferentLane) - 
-                 CarList.Instance.GetBehindGap(tracker, CarList.FindCarOption.InDifferentLane)) >= 14.0f;
+            return Mathf.Abs(CarList.Instance.GetAheadGap(m_Tracker, CarList.FindCarOption.InDifferentLane) + 
+                 CarList.Instance.GetBehindGap(m_Tracker, CarList.FindCarOption.InDifferentLane));
         }
 
+        WaypointProgressTracker FindMergeAttemptingCar()
+        {
+            var aheadCar = CarList.Instance.FindAheadCar(m_Tracker, CarList.FindCarOption.InSameLane);
+            var siblingLaneAheadCar = CarList.Instance.FindAheadCar(m_Tracker, CarList.FindCarOption.InDifferentLane);
+                                
+            if (siblingLaneAheadCar != null 
+                && aheadCar != null
+                && ((m_Tracker.carLane == WaypointProgressTracker.CarLane.ThroughLane && siblingLaneAheadCar.GetComponent<CarController>().LeftWinkerOn)
+                    || (m_Tracker.carLane == WaypointProgressTracker.CarLane.MergingLane && siblingLaneAheadCar.GetComponent<CarController>().RightWinkerOn)))
+            {
+                return siblingLaneAheadCar;
+            }
+
+            return null;
+        }
 
         private void OnCollisionStay(Collision col)
         {
@@ -322,9 +293,12 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void OnTriggerEnter(Collider other)
         {
-            if (other.tag == "MergeTrigger")
+            var tracker = GetComponent<WaypointProgressTracker>();
+            
+            if (other.CompareTag("MergeTrigger") && tracker.carLane == WaypointProgressTracker.CarLane.MergingLane)
             {
-                m_AttemptingLaneChange = true;
+                GetComponent<CarController>().LeftWinkerOn = true;
+                DrivingStrategy = new MergingActivatedStrategy(this);
             }
         }
 
@@ -333,6 +307,188 @@ namespace UnityStandardAssets.Vehicles.Car
         {
             m_Target = target;
             m_Driving = true;
+        }
+
+        abstract class StrategyBase
+        {
+            protected StrategyBase()
+            {
+                nextStrategy = this;
+            }
+            
+            public StrategyBase nextStrategy { get; protected set; } 
+            public abstract float Tick(float desiredSpeed);
+        }
+
+        class NormalStrategy : StrategyBase
+        {
+            private readonly CarAIControl car;
+            
+            public NormalStrategy(CarAIControl controlledCar)
+            {
+                car = controlledCar;
+            }
+
+            public override float Tick(float desiredSpeed)
+            {
+                var accel = (desiredSpeed - car.m_CarController.CurrentSpeed) * car.m_DesiredSpeedSensitivity;
+                var aheadCar = CarList.Instance.FindAheadCar(car.m_Tracker, CarList.FindCarOption.InSameLane);
+
+                if (aheadCar != null)
+                {
+                    float gap = CarList.Instance.GetAheadGap(car.m_Tracker);
+                    accel += (1.0f - car.m_RequiredHeadGap / gap) * car.m_HeadGapSensitivity;
+                }
+                
+                if (car.m_AcceptsMergingCar)
+                {
+                    var siblingTracker = car.FindMergeAttemptingCar();
+                    
+                    if (siblingTracker != null)
+                    {
+                        nextStrategy = new YieldingStrategy(car, siblingTracker);
+                    }
+                }
+
+                return accel;
+            }
+        }
+
+        class YieldingStrategy : StrategyBase
+        {
+            private readonly CarAIControl car;
+            private readonly WaypointProgressTracker triggerTracker;
+            
+            public YieldingStrategy(CarAIControl controlledCar, WaypointProgressTracker tracker)
+            {
+                car = controlledCar;
+                triggerTracker = tracker;
+            }
+            
+            public override float Tick(float desiredSpeed)
+            {
+                var accel = (desiredSpeed - car.m_CarController.CurrentSpeed) * car.m_DesiredSpeedSensitivity;
+
+                var minGap = Mathf.Min(CarList.Instance.GetAheadGap(car.m_Tracker), CarList.Instance.GetAheadGap(car.m_Tracker, CarList.FindCarOption.InDifferentLane));
+                accel += (1.0f - car.m_YieldingRequiredHeadGap / minGap) * car.m_YieldingSensitivity;
+
+                if (triggerTracker.carLane == car.m_Tracker.carLane || triggerTracker.carLane == WaypointProgressTracker.CarLane.InterLane)
+                {
+                    car.m_AcceptsMergingCar = false;
+                    nextStrategy = new NormalStrategy(car);
+                } 
+                else if (car.FindMergeAttemptingCar() != triggerTracker)
+                {
+                    nextStrategy = new NormalStrategy(car);
+                }
+                
+                return accel;
+            }
+        }
+
+        class MergingActivatedStrategy : StrategyBase
+        {
+            private readonly CarAIControl car;
+            private float previousMergingSpace;
+
+            public MergingActivatedStrategy(CarAIControl controlledCar)
+            {
+                car = controlledCar;
+                previousMergingSpace = car.GetMergingSpace();
+            }
+
+            public override float Tick(float desiredSpeed)
+            {
+                var mergingSpace = car.GetMergingSpace();
+                var widingSpace = mergingSpace - previousMergingSpace > 0.1f;
+                
+                var accel = (desiredSpeed * (widingSpace ? 1.0f : car.m_MergingWaitingDesiredSpeedFactor) - car.m_CarController.CurrentSpeed) * car.m_DesiredSpeedSensitivity;
+                var aheadCar = CarList.Instance.FindAheadCar(car.m_Tracker, CarList.FindCarOption.InSameLane);
+                
+                if (aheadCar != null)
+                {
+                    float gap = CarList.Instance.GetAheadGap(car.m_Tracker);
+                    accel += (1.0f - car.m_RequiredHeadGap / gap) * car.m_HeadGapSensitivity;
+                }
+
+                if (car.GetMergingSpace() > car.m_MergingRequiredSpace)
+                {
+                    nextStrategy = new MergeTuningStrategy(car);
+                }
+
+                previousMergingSpace = mergingSpace;
+                
+                return accel;
+            }
+        }
+
+        class MergeTuningStrategy : StrategyBase
+        {
+            private readonly CarAIControl car;
+            
+            public MergeTuningStrategy(CarAIControl controlledCar)
+            {
+                car = controlledCar;
+            }
+            
+            public override float Tick(float desiredSpeed)
+            {
+                var accel = (desiredSpeed - car.m_CarController.CurrentSpeed) * car.m_DesiredSpeedSensitivity * 0.5f;
+
+                var aheadAccel = 1.0f - car.m_RequiredHeadGap / CarList.Instance.GetAheadGap(car.m_Tracker);
+                var siblingAccel = 1.0f - Mathf.Max(car.m_RequiredHeadGap * car.m_MergingRequiredHeadGapFactor, car.m_MergingRequiredAheadGap) / CarList.Instance.GetAheadGap(car.m_Tracker, CarList.FindCarOption.InDifferentLane);
+
+                accel += Mathf.Min(aheadAccel, siblingAccel) * car.m_HeadGapSensitivity;
+
+                if (car.HasMergingHeads())
+                {
+                    car.m_Tracker.ChangeLane(WaypointProgressTracker.CarLane.ThroughLane);
+                    nextStrategy = new MergingStrategy(car, WaypointProgressTracker.CarLane.ThroughLane);
+                }
+                else if (car.GetMergingSpace() < car.m_MergingRequiredSpace)
+                {
+                    // nextStrategy = new MergingActivatedStrategy(car);
+                }
+                
+                return accel;
+            }
+        }
+
+        class MergingStrategy : StrategyBase
+        {
+            private readonly CarAIControl car;
+            private readonly WaypointProgressTracker.CarLane targetLane;
+            private readonly WaypointProgressTracker.CarLane originalLane;
+            
+            public MergingStrategy(CarAIControl controlledCar, WaypointProgressTracker.CarLane target)
+            {
+                car = controlledCar;
+                targetLane = target;
+                
+                originalLane = car.m_Tracker.carLane;
+            }
+            
+            public override float Tick(float desiredSpeed)
+            {
+                var accel = (desiredSpeed - car.m_CarController.CurrentSpeed) * car.m_DesiredSpeedSensitivity * 0.5f;
+
+                var aheadAccel = 1.0f - car.m_RequiredHeadGap / CarList.Instance.GetAheadGap(car.m_Tracker);
+                var siblingAccel = 1.0f - Mathf.Max(car.m_RequiredHeadGap * car.m_MergingRequiredHeadGapFactor, car.m_MergingRequiredAheadGap) / CarList.Instance.GetAheadGap(car.m_Tracker, CarList.FindCarOption.InDifferentLane);
+
+                accel += Mathf.Min(aheadAccel, siblingAccel) * car.m_HeadGapSensitivity;
+
+                if (car.m_Tracker.carLane == targetLane)
+                {
+                    nextStrategy = new NormalStrategy(car);
+                } 
+                else if (!car.HasMergingHeads())
+                {
+                    car.GetComponent<CarController>().LeftWinkerOn = true;
+                    // nextStrategy = new MergeTuningStrategy(car);
+                }
+                
+                return accel;
+            }
         }
     }
 }

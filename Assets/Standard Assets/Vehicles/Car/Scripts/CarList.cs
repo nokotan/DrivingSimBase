@@ -89,13 +89,19 @@ public class CarList : MonoBehaviour
 
     public float GetBehindGap(WaypointProgressTracker thisCar, FindCarOption option = FindCarOption.InSameLane)
     {
-        var behindCar = FindBehindCar(thisCar, option);
+        var behindCar = FindBehindCar(thisCar, option); 
         return behindCar != null ? Vector3.Magnitude(thisCar.transform.position - behindCar.transform.position) : float.PositiveInfinity;
+//        return behindCar != null
+//            ? Mathf.Abs(thisCar.progressDistance - behindCar.progressDistance)
+//            : float.PositiveInfinity;
     }
 
     public float GetAheadGap(WaypointProgressTracker thisCar, FindCarOption option = FindCarOption.InSameLane)
     {
         var aheadCar = FindAheadCar(thisCar, option);
         return aheadCar != null ? Vector3.Magnitude(thisCar.transform.position - aheadCar.transform.position) : float.PositiveInfinity;
+//        return aheadCar != null
+//            ? Mathf.Abs(thisCar.progressDistance - aheadCar.progressDistance)
+//            : float.PositiveInfinity;
     }
 }
