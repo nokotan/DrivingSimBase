@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class ScreenActivator
 {
-    [RuntimeInitializeOnLoadMethod()]
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
     public static void OnStart()
     {
         int count = Mathf.Min(Display.displays.Length, 3);
@@ -12,6 +12,15 @@ public static class ScreenActivator
         for (int i = 0; i < count; ++i)
         {
             Display.displays[i].Activate();
+
+            if (i == 0)
+            {
+                Display.displays[i].SetRenderingResolution(1920, 1280);
+            }
+            else
+            {
+                Display.displays[i].SetRenderingResolution(1440, 900);
+            }
         }
     }
 }
