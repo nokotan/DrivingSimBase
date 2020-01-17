@@ -7195,10 +7195,11 @@ MonoBehaviour:
   m_DesiredSpeedSensitivity: 0.6
   m_RequiredHeadGap: 12
   m_HeadGapSensitivity: 4
-  m_YieldingRequiredHeadGap: 20
+  m_YieldingRequiredHeadGap: 18
   m_YieldingSensitivity: 3
   m_MergingWaitingDesiredSpeedFactor: 0.6
-  m_MergingRequiredHeadGapFactor: 0.4
+  m_MergingDesiredSpeedFactor: 0.6
+  m_MergingRequiredHeadGapFactor: 1.4
   m_MergingRequiredAheadGap: 8
   m_MergingRequiredBackGap: 8
   m_MergingRequiredSpace: 16
@@ -7213,7 +7214,6 @@ MonoBehaviour:
   m_StopWhenTargetReached: 0
   m_ReachTargetThreshold: 2
   StrategyString: 
-  FrameCount: 0
 --- !u!114 &11400024
 MonoBehaviour:
   m_ObjectHideFlags: 0

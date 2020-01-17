@@ -45,6 +45,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
         [Header("MergingAccel")] 
         [SerializeField] private float m_MergingWaitingDesiredSpeedFactor = 0.6f;
+        [SerializeField] private float m_MergingDesiredSpeedFactor = 0.6f;
         [SerializeField] private float m_MergingRequiredHeadGapFactor = 0.6f;
 
         [Header("MergingRequirements")] [SerializeField]
@@ -367,10 +368,10 @@ namespace UnityStandardAssets.Vehicles.Car
             {
                 var accel = (desiredSpeed - car.m_CarController.CurrentSpeed) * car.m_DesiredSpeedSensitivity;
 
-                var minGap = Mathf.Min(CarList.Instance.GetAheadGap(car.m_Tracker), CarList.Instance.GetAheadGap(car.m_Tracker, CarList.FindCarOption.InDifferentLane));
+                var minGap = Mathf.Min(CarList.Instance.GetAheadGap(car.m_Tracker), CarList.Instance.GetGap(car.m_Tracker, triggerTracker));
                 accel += (1.0f - car.m_YieldingRequiredHeadGap / minGap) * car.m_YieldingSensitivity;
 
-                if (triggerTracker.carLane == car.m_Tracker.carLane || triggerTracker.carLane == WaypointProgressTracker.CarLane.InterLane)
+                if (triggerTracker.carLane == WaypointProgressTracker.CarLane.InterLane)
                 {
                     car.m_AcceptsMergingCar = false;
                     nextStrategy = new NormalStrategy(car);
@@ -431,10 +432,10 @@ namespace UnityStandardAssets.Vehicles.Car
             
             public override float Tick(float desiredSpeed)
             {
-                var accel = (desiredSpeed - car.m_CarController.CurrentSpeed) * car.m_DesiredSpeedSensitivity * 0.5f;
+                var accel = (desiredSpeed - car.m_CarController.CurrentSpeed) * car.m_DesiredSpeedSensitivity * car.m_MergingDesiredSpeedFactor;
 
                 var aheadAccel = 1.0f - car.m_RequiredHeadGap / CarList.Instance.GetAheadGap(car.m_Tracker);
-                var siblingAccel = 1.0f - Mathf.Max(car.m_RequiredHeadGap * car.m_MergingRequiredHeadGapFactor, car.m_MergingRequiredAheadGap) / CarList.Instance.GetAheadGap(car.m_Tracker, CarList.FindCarOption.InDifferentLane);
+                var siblingAccel = 1.0f - car.m_MergingRequiredAheadGap * car.m_MergingRequiredHeadGapFactor / CarList.Instance.GetAheadGap(car.m_Tracker, CarList.FindCarOption.InDifferentLane);
 
                 accel += Mathf.Min(aheadAccel, siblingAccel) * car.m_HeadGapSensitivity;
 
@@ -445,7 +446,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 }
                 else if (car.GetMergingSpace() < car.m_MergingRequiredSpace)
                 {
-                    // nextStrategy = new MergingActivatedStrategy(car);
+                    nextStrategy = new MergingActivatedStrategy(car);
                 }
                 
                 return accel;
@@ -468,7 +469,7 @@ namespace UnityStandardAssets.Vehicles.Car
             
             public override float Tick(float desiredSpeed)
             {
-                var accel = (desiredSpeed - car.m_CarController.CurrentSpeed) * car.m_DesiredSpeedSensitivity * 0.5f;
+                var accel = (desiredSpeed - car.m_CarController.CurrentSpeed) * car.m_DesiredSpeedSensitivity * car.m_MergingDesiredSpeedFactor;
 
                 var aheadAccel = 1.0f - car.m_RequiredHeadGap / CarList.Instance.GetAheadGap(car.m_Tracker);
                 var siblingAccel = 1.0f - Mathf.Max(car.m_RequiredHeadGap * car.m_MergingRequiredHeadGapFactor, car.m_MergingRequiredAheadGap) / CarList.Instance.GetAheadGap(car.m_Tracker, CarList.FindCarOption.InDifferentLane);
@@ -481,8 +482,9 @@ namespace UnityStandardAssets.Vehicles.Car
                 } 
                 else if (!car.HasMergingHeads())
                 {
-                    car.GetComponent<CarController>().LeftWinkerOn = true;
-                    // nextStrategy = new MergeTuningStrategy(car);
+                    //car.m_Tracker.ChangeLane(originalLane);
+                    //car.GetComponent<CarController>().LeftWinkerOn = true;
+                    //nextStrategy = new MergeTuningStrategy(car);
                 }
                 
                 return accel;
