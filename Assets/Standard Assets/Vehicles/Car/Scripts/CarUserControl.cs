@@ -23,8 +23,15 @@ namespace UnityStandardAssets.Vehicles.Car
             float h = CrossPlatformInputManager.GetAxis("Horizontal");
             float v = CrossPlatformInputManager.GetAxis("Vertical");
 
-            m_Car.LeftWinkerOn |= CrossPlatformInputManager.GetButtonDown("Fire1");
-            m_Car.RightWinkerOn |= CrossPlatformInputManager.GetButtonDown("Fire2");
+            if (!m_Car.LeftWinkerOn)
+                m_Car.LeftWinkerOn |= CrossPlatformInputManager.GetButtonDown("Fire1");
+            else
+                m_Car.LeftWinkerOn &= !CrossPlatformInputManager.GetButtonDown("Fire1");
+
+            if (!m_Car.RightWinkerOn)
+                m_Car.RightWinkerOn |= CrossPlatformInputManager.GetButtonDown("Fire2");
+            else
+                m_Car.RightWinkerOn &= !CrossPlatformInputManager.GetButtonDown("Fire2");
 
 #if !MOBILE_INPUT
             float handbrake = CrossPlatformInputManager.GetAxis("Jump");

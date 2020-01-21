@@ -238,8 +238,10 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private float GetMergingSpace()
         {
-            return Mathf.Abs(CarList.Instance.GetAheadGap(m_Tracker, CarList.FindCarOption.InDifferentLane) + 
-                 CarList.Instance.GetBehindGap(m_Tracker, CarList.FindCarOption.InDifferentLane));
+            var aheadGap = Mathf.Min(CarList.Instance.GetAheadGap(m_Tracker, CarList.FindCarOption.InDifferentLane), CarList.Instance.GetAheadGap(m_Tracker));
+            var behindGap = CarList.Instance.GetBehindGap(m_Tracker, CarList.FindCarOption.InDifferentLane);
+
+            return aheadGap + behindGap;
         }
 
         WaypointProgressTracker FindMergeAttemptingCar()
@@ -247,8 +249,17 @@ namespace UnityStandardAssets.Vehicles.Car
             var aheadCar = CarList.Instance.FindAheadCar(m_Tracker, CarList.FindCarOption.InSameLane);
             var siblingLaneAheadCar = CarList.Instance.FindAheadCar(m_Tracker, CarList.FindCarOption.InDifferentLane);
                                 
+            if (aheadCar != null)
+            {
+                siblingLaneAheadCar = CarList.Instance.FindBehindCar(aheadCar, CarList.FindCarOption.InDifferentLane);
+            }
+
+            if (siblingLaneAheadCar == null)
+            {
+                siblingLaneAheadCar = CarList.Instance.FindAheadCar(m_Tracker, CarList.FindCarOption.InDifferentLane);
+            }
+
             if (siblingLaneAheadCar != null 
-                && aheadCar != null
                 && ((m_Tracker.carLane == WaypointProgressTracker.CarLane.ThroughLane && siblingLaneAheadCar.GetComponent<CarController>().LeftWinkerOn)
                     || (m_Tracker.carLane == WaypointProgressTracker.CarLane.MergingLane && siblingLaneAheadCar.GetComponent<CarController>().RightWinkerOn)))
             {

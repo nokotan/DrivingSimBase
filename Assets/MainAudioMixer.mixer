@@ -54,6 +54,7 @@ AudioMixerController:
   - guids:
     - 38088d58da0360344836165b4317a86f
     - f76f822b96483ef48b9ac0aaf83a59f0
+    - ae7552db6081bdc4eaef690cdbca7be7
     name: View
   m_CurrentViewIndex: 0
   m_TargetSnapshot: {fileID: 24500006}
@@ -68,6 +69,7 @@ AudioMixerGroupController:
   m_GroupID: 38088d58da0360344836165b4317a86f
   m_Children:
   - {fileID: -6856056473692376401}
+  - {fileID: 1257366608553134542}
   m_Volume: cfbcf7643056efb49ad84fd833464140
   m_Pitch: b40fd813b23212e4693d9075d0a886b2
   m_Send: 00000000000000000000000000000000
@@ -103,8 +105,42 @@ AudioMixerSnapshotController:
   m_FloatValues:
     beb8804285b977343b1f35db9b75d127: 1000
     a6f6a2826c995c14c945b364ad2649d8: -10
+    ea2b366c6f9377b4d9c278419c737bce: 0
     2cbf878c45fe92e408b457041143a8ce: 2
   m_TransitionOverrides: {}
+--- !u!243 &1257366608553134542
+AudioMixerGroupController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Winker
+  m_AudioMixer: {fileID: 24100000}
+  m_GroupID: ae7552db6081bdc4eaef690cdbca7be7
+  m_Children: []
+  m_Volume: ea2b366c6f9377b4d9c278419c737bce
+  m_Pitch: ae53ad54c3a464e408b337de99035a85
+  m_Send: 00000000000000000000000000000000
+  m_Effects:
+  - {fileID: 4895682431032913700}
+  m_UserColorIndex: 0
+  m_Mute: 0
+  m_Solo: 0
+  m_BypassEffects: 0
+--- !u!244 &4895682431032913700
+AudioMixerEffectController:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_EffectID: 5d1860d02457d364780cd184218e40b1
+  m_EffectName: Attenuation
+  m_MixLevel: e01231671db0e0746b51072e4a67eb37
+  m_Parameters: []
+  m_SendTarget: {fileID: 0}
+  m_EnableWetMix: 0
+  m_Bypass: 0
 --- !u!244 &8079513624720474475
 AudioMixerEffectController:
   m_ObjectHideFlags: 3
